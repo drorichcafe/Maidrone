@@ -1,21 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Boot>F11</Boot>
+  <PrintInfo>Space</PrintInfo>
+  <SwitchCamera>Return</SwitchCamera>
+  <SwitchAlgorithm>Backspace</SwitchAlgorithm>
   <MoveForward>W</MoveForward>
   <MoveBackward>S</MoveBackward>
   <MoveLeft>A</MoveLeft>
   <MoveRight>D</MoveRight>
   <MoveUp>LeftShift</MoveUp>
   <MoveDown>RightShift</MoveDown>
-  <RotateLeft>LeftArrow</RotateLeft>
-  <RotateRight>RightArrow</RotateRight>
-  <RotateUp>DownArrow</RotateUp>
-  <RotateDown>UpArrow</RotateDown>
-  <SwitchCamera>Return</SwitchCamera>
-  <AccelXZ>0.5</AccelXZ>
-  <AccelY>0.5</AccelY>
-  <RotSpeedYaw>15</RotSpeedYaw>
-  <RotSpeedPitch>15</RotSpeedPitch>
-  <ModelScale>0.05</ModelScale>
+  <CameraPitchUp>DownArrow</CameraPitchUp>
+  <CameraPitchDown>UpArrow</CameraPitchDown>
+  <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
+  <ModelScale>0.05</ModelScale>
+  <ManualSetting>
+    <RotateLeft>LeftArrow</RotateLeft>
+    <RotateRight>RightArrow</RotateRight>
+    <RotSpeed>15</RotSpeed>
+    <AccelXZ>0.2</AccelXZ>
+    <AccelY>0.2</AccelY>
+    <Brake>0.1</Brake>
+  </ManualSetting>
+  <WaypointSetting>
+    <MoveSpeed>1.0</MoveSpeed>
+    <Waypoints>
+      <Waypoint><Position><x>-1</x><y>1</y><z>-1</z></Position><Rotation><x>0</x><y>45</y><z>0</z></Rotation></Waypoint>
+      <Waypoint><Position><x>-1</x><y>1</y><z>1</z></Position><Rotation><x>0</x><y>135</y><z>0</z></Rotation></Waypoint>
+      <Waypoint><Position><x>1</x><y>1</y><z>1</z></Position><Rotation><x>0</x><y>225</y><z>0</z></Rotation></Waypoint>
+      <Waypoint><Position><x>1</x><y>1</y><z>-1</z></Position><Rotation><x>0</x><y>315</y><z>0</z></Rotation></Waypoint>
+      <Waypoint><Position><x>-1</x><y>1</y><z>-1</z></Position><Rotation><x>0</x><y>405</y><z>0</z></Rotation></Waypoint>
+    </Waypoints>
+  </WaypointSetting>
+  <LissajousSetting>
+    <Position><x>0</x><y>1</y><z>0</z></Position>
+    <Amplitude><x>2</x><y>0.1</y><z>2</z></Amplitude>
+    <Frequency><x>0.01</x><y>0.1</y><z>0.01</z></Frequency>
+    <Offset><x>0</x><y>0</y><z>90</z></Offset>
+  </LissajousSetting>
 </Config>
