@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Boot>F11</Boot>
+  <MoveForward>W</MoveForward>
+  <MoveBackward>S</MoveBackward>
+  <MoveLeft>A</MoveLeft>
+  <MoveRight>D</MoveRight>
+  <MoveUp>LeftShift</MoveUp>
+  <MoveDown>RightShift</MoveDown>
+  <RotateLeft>LeftArrow</RotateLeft>
+  <RotateRight>RightArrow</RotateRight>
+  <RotateUp>DownArrow</RotateUp>
+  <RotateDown>UpArrow</RotateDown>
+  <SwitchCamera>Return</SwitchCamera>
+  <AccelXZ>0.5</AccelXZ>
+  <AccelY>0.5</AccelY>
+  <RotSpeedYaw>15</RotSpeedYaw>
+  <RotSpeedPitch>15</RotSpeedPitch>
+  <ModelScale>0.05</ModelScale>
+  <CameraDistance>0.25</CameraDistance>
+</Config>
