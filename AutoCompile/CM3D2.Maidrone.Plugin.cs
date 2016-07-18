@@ -10,7 +10,7 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.2")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.3")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
@@ -154,7 +154,19 @@ namespace CM3D2.Maidrone
 				}
 				else if(config.ScreenSaverSetting.Enable)
 				{
-					if (Time.time - ssInvokeTimer > config.ScreenSaverSetting.Time)
+					bool allowChangeToSS = true;
+
+					var go = GameObject.Find("Maidrone");
+					if (go != null)
+					{
+						var dr = go.GetComponent<Drone>();
+						if (dr != null)
+						{
+							allowChangeToSS = (dr.algorithm == Drone.Algorithm.Manual);
+						}
+					}
+
+					if (allowChangeToSS && Time.time - ssInvokeTimer > config.ScreenSaverSetting.Time)
 					{
 						beginScreenSaver();
 					}
