@@ -10,7 +10,7 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.3")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.4")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
@@ -23,6 +23,7 @@ namespace CM3D2.Maidrone
 		{
 			public Vector3 Position = new Vector3();
 			public KeyCode ResetPosition = KeyCode.R;
+			public KeyCode Stop = KeyCode.LeftControl;
 			public KeyCode RotateLeft = KeyCode.LeftArrow;
 			public KeyCode RotateRight = KeyCode.RightArrow;
 			public float RotSpeed = 15.0f;
@@ -69,6 +70,7 @@ namespace CM3D2.Maidrone
 			public KeyCode CameraPitchDown = KeyCode.UpArrow;
 			public float CameraPitchSpeed = 15.0f;
 			public float CameraDistance = 0.25f;
+			public float CameraFieldOfView = 45.0f;
 			public float ModelScale = 0.05f;
 			public LissajousInfo ModelLissajous = new LissajousInfo();
 			public ManualInfo ManualSetting = new ManualInfo();
@@ -81,6 +83,7 @@ namespace CM3D2.Maidrone
 		{
 			public Vector3 cameraPosition = new Vector3();
 			public Quaternion cameraRotation = new Quaternion();
+			public float cameraFov = 45.0f;
 			public bool droneIsCreated = false;
 			public float cameraPitch = 0.0f;
 			public bool firstPersonView = false;
@@ -95,6 +98,7 @@ namespace CM3D2.Maidrone
 		static GameState originalState = new GameState();
 		static Vector3 mousePosition = new Vector3();
 		static float ssInvokeTimer = 0.0f;
+		static int level = 0;
 
 		public void Awake()
 		{
@@ -102,6 +106,11 @@ namespace CM3D2.Maidrone
 			originalState.dronePosition = config.ManualSetting.Position;
 			ssInvokeTimer = Time.time;
 			DontDestroyOnLoad(this);
+		}
+
+		public void OnLevelWasLoaded(int lv)
+		{
+			level = lv;
 		}
 
 		public void OnApplicationFocus(bool focusStatus)
@@ -156,19 +165,26 @@ namespace CM3D2.Maidrone
 				{
 					bool allowChangeToSS = true;
 
-					var go = GameObject.Find("Maidrone");
-					if (go != null)
+					if (level == 26)
 					{
-						var dr = go.GetComponent<Drone>();
-						if (dr != null)
-						{
-							allowChangeToSS = (dr.algorithm == Drone.Algorithm.Manual);
-						}
+						allowChangeToSS = false;
 					}
-
-					if (allowChangeToSS && Time.time - ssInvokeTimer > config.ScreenSaverSetting.Time)
+					else
 					{
-						beginScreenSaver();
+						var go = GameObject.Find("Maidrone");
+						if (go != null)
+						{
+							var dr = go.GetComponent<Drone>();
+							if (dr != null)
+							{
+								allowChangeToSS = (dr.algorithm == Drone.Algorithm.Manual);
+							}
+						}
+
+						if (allowChangeToSS && Time.time - ssInvokeTimer > config.ScreenSaverSetting.Time)
+						{
+							beginScreenSaver();
+						}
 					}
 				}
 			}
@@ -224,6 +240,7 @@ namespace CM3D2.Maidrone
 			{
 				originalState.cameraPosition = cam.transform.position;
 				originalState.cameraRotation = cam.transform.rotation;
+				originalState.cameraFov = cam.GetComponent<Camera>().fieldOfView;
 			}
 		}
 
@@ -234,6 +251,7 @@ namespace CM3D2.Maidrone
 			{
 				cam.transform.position = originalState.cameraPosition;
 				cam.transform.rotation = originalState.cameraRotation;
+				cam.GetComponent<Camera>().fieldOfView = originalState.cameraFov;
 			}
 		}
 
@@ -337,6 +355,8 @@ namespace CM3D2.Maidrone
 
 				m_model = model;
 				m_blade = blade;
+
+				changeView(m_firstPersonView);
 			}
 
 			void Update()
@@ -388,6 +408,7 @@ namespace CM3D2.Maidrone
 					if (Input.GetKey(config.MoveBackward)) m_velocity -= transform.forward * accXZ;
 					if (Input.GetKey(config.MoveRight)) m_velocity += transform.right * accXZ;
 					if (Input.GetKey(config.MoveLeft)) m_velocity -= transform.right * accXZ;
+					if (Input.GetKey(man.Stop)) m_velocity = Vector3.zero;
 					transform.position += m_velocity * Time.deltaTime;
 					m_velocity -= m_velocity * Mathf.Clamp(Time.deltaTime * man.Brake, 0.0f, 1.0f);
 
@@ -467,6 +488,8 @@ namespace CM3D2.Maidrone
 						cam.transform.position = transform.position;
 						cam.transform.LookAt(transform.position + Quaternion.AngleAxis(m_cameraPitch, transform.right) * transform.forward);
 					}
+
+					cam.GetComponent<Camera>().fieldOfView = config.CameraFieldOfView;
 				}
 			}
 

@@ -2,7 +2,7 @@
 <Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Boot>F11</Boot>
   <PrintInfo>Space</PrintInfo>
-  <SwitchCamera>Return</SwitchCamera>
+  <SwitchCamera>Tab</SwitchCamera>
   <SwitchAlgorithm>Backspace</SwitchAlgorithm>
   <MoveForward>W</MoveForward>
   <MoveBackward>S</MoveBackward>
@@ -14,6 +14,7 @@
   <CameraPitchDown>UpArrow</CameraPitchDown>
   <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
+  <CameraFieldOfView>45.0</CameraFieldOfView>
   <ModelScale>0.05</ModelScale>
   <ModelLissajous>
     <Position><x>0</x><y>0</y><z>0</z></Position>
@@ -24,6 +25,7 @@
   <ManualSetting>
     <Position><x>0</x><y>1.0</y><z>0</z></Position>
     <ResetPosition>R</ResetPosition>
+    <Stop>LeftControl</Stop>
     <RotateLeft>LeftArrow</RotateLeft>
     <RotateRight>RightArrow</RotateRight>
     <RotSpeed>15</RotSpeed>
@@ -43,14 +45,14 @@
   </WaypointSetting>
   <LissajousSetting>
     <Position><x>0</x><y>1</y><z>0</z></Position>
-    <Amplitude><x>2</x><y>0.1</y><z>2</z></Amplitude>
-    <Frequency><x>0.01</x><y>0.1</y><z>0.01</z></Frequency>
+    <Amplitude><x>0.5</x><y>0.1</y><z>0.5</z></Amplitude>
+    <Frequency><x>0.05</x><y>0.1</y><z>0.05</z></Frequency>
     <Offset><x>0</x><y>0</y><z>90</z></Offset>
   </LissajousSetting>
   <ScreenSaverSetting>
     <Enable>true</Enable>
-    <Time>60</Time>
-    <Algorithm>Lissajous</Algorithm><!-- Waypotins, Lissajous -->
+    <Time>15</Time>
+    <Algorithm>Lissajous</Algorithm><!-- Manual, Waypotins, Lissajous -->
     <FirstPersonView>true</FirstPersonView>
   </ScreenSaverSetting>
 </Config>
