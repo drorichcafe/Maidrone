@@ -15,7 +15,15 @@
   <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
   <ModelScale>0.05</ModelScale>
+  <ModelLissajous>
+    <Position><x>0</x><y>0</y><z>0</z></Position>
+    <Amplitude><x>0</x><y>0.005</y><z>0</z></Amplitude>
+    <Frequency><x>0</x><y>0.3333</y><z>0</z></Frequency>
+    <Offset><x>0</x><y>0</y><z>0</z></Offset>
+  </ModelLissajous>
   <ManualSetting>
+    <Position><x>0</x><y>1.0</y><z>0</z></Position>
+    <ResetPosition>R</ResetPosition>
     <RotateLeft>LeftArrow</RotateLeft>
     <RotateRight>RightArrow</RotateRight>
     <RotSpeed>15</RotSpeed>
@@ -39,4 +47,10 @@
     <Frequency><x>0.01</x><y>0.1</y><z>0.01</z></Frequency>
     <Offset><x>0</x><y>0</y><z>90</z></Offset>
   </LissajousSetting>
+  <ScreenSaverSetting>
+    <Enable>true</Enable>
+    <Time>60</Time>
+    <Algorithm>Lissajous</Algorithm><!-- Waypotins, Lissajous -->
+    <FirstPersonView>true</FirstPersonView>
+  </ScreenSaverSetting>
 </Config>

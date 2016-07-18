@@ -10,17 +10,19 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.1")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.2")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
 		{
-			public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
-			public Vector3 Rotation = new Vector3(0.0f, 0.0f, 0.0f);
+			public Vector3 Position = Vector3.zero;
+			public Vector3 Rotation = Vector3.zero;
 		}
 
 		public class ManualInfo
 		{
+			public Vector3 Position = new Vector3();
+			public KeyCode ResetPosition = KeyCode.R;
 			public KeyCode RotateLeft = KeyCode.LeftArrow;
 			public KeyCode RotateRight = KeyCode.RightArrow;
 			public float RotSpeed = 15.0f;
@@ -37,10 +39,18 @@ namespace CM3D2.Maidrone
 
 		public class LissajousInfo
 		{
-			public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
+			public Vector3 Position = Vector3.zero;
 			public Vector3 Amplitude = new Vector3(1.0f, 0.1f, 1.0f);
 			public Vector3 Frequency = new Vector3(1.0f, 50.0f, 1.0f);
 			public Vector3 Offset = new Vector3(0.0f, 0.0f, 180.0f);
+		}
+
+		public class ScreenSaverInfo
+		{
+			public bool Enable = true;
+			public float Time = 60.0f;
+			public Drone.Algorithm Algorithm = Drone.Algorithm.Lissajous;
+			public bool FirstPersonView = false;
 		}
 
 		public class Config
@@ -60,33 +70,191 @@ namespace CM3D2.Maidrone
 			public float CameraPitchSpeed = 15.0f;
 			public float CameraDistance = 0.25f;
 			public float ModelScale = 0.05f;
+			public LissajousInfo ModelLissajous = new LissajousInfo();
 			public ManualInfo ManualSetting = new ManualInfo();
 			public WaypointInfo WaypointSetting = new WaypointInfo();
 			public LissajousInfo LissajousSetting = new LissajousInfo();
+			public ScreenSaverInfo ScreenSaverSetting = new ScreenSaverInfo();
+		}
+
+		class GameState
+		{
+			public Vector3 cameraPosition = new Vector3();
+			public Quaternion cameraRotation = new Quaternion();
+			public bool droneIsCreated = false;
+			public float cameraPitch = 0.0f;
+			public bool firstPersonView = false;
+			public Drone.Algorithm algorithm = Drone.Algorithm.Manual;
+			public Vector3 dronePosition = new Vector3();
+			public Quaternion droneRotation = new Quaternion();
 		}
 
 		static Config config = new Config();
+		static bool isAppFocused = true;
+		static bool isScreenSaver = false;
+		static GameState originalState = new GameState();
+		static Vector3 mousePosition = new Vector3();
+		static float ssInvokeTimer = 0.0f;
 
 		public void Awake()
 		{
 			loadConfig();
+			originalState.dronePosition = config.ManualSetting.Position;
+			ssInvokeTimer = Time.time;
 			DontDestroyOnLoad(this);
+		}
+
+		public void OnApplicationFocus(bool focusStatus)
+		{
+			isAppFocused = focusStatus;
+			ssInvokeTimer = Time.time;
+			mousePosition = Input.mousePosition;
+
+			if (isScreenSaver)
+			{
+				endScreenSaver();
+			}
 		}
 
 		public void LateUpdate()
 		{
-			if (Input.GetKeyDown(config.Boot))
+			if (isScreenSaver)
+			{
+				if (isAppFocused && (Input.anyKey || Input.mousePosition != mousePosition))
+				{
+					endScreenSaver();
+				}
+			}
+			else {
+				if (isAppFocused && Input.GetKeyDown(config.Boot))
+				{
+					var go = GameObject.Find("Maidrone");
+					if (go == null)
+					{
+						loadConfig();
+						
+						go = new GameObject("Maidrone");
+						go.AddComponent<Drone>();
+
+						saveCameraState();
+						loadDroneState();
+					}
+					else
+					{
+						saveDroneState();
+						loadCameraState();
+
+						Destroy(go);
+					}
+				}
+				else if (isAppFocused && (Input.anyKey || Input.mousePosition != mousePosition))
+				{
+					ssInvokeTimer = Time.time;
+					mousePosition = Input.mousePosition;
+				}
+				else if(config.ScreenSaverSetting.Enable)
+				{
+					if (Time.time - ssInvokeTimer > config.ScreenSaverSetting.Time)
+					{
+						beginScreenSaver();
+					}
+				}
+			}
+		}
+
+		private void beginScreenSaver()
+		{
+			Console.WriteLine("Maidrone: スクリーンセーバーを起動");
+
+			loadConfig();
+
+			var go = GameObject.Find("Maidrone");
+			originalState.droneIsCreated = go != null;
+			if (go == null) go = new GameObject("Maidrone");
+			else saveDroneState();
+			saveCameraState();
+
+			var dr = go.GetComponent<Drone>();
+			if (dr == null) dr = go.AddComponent<Drone>();
+			dr.changeAlgorithm(config.ScreenSaverSetting.Algorithm);
+			dr.changeView(config.ScreenSaverSetting.FirstPersonView);
+
+			ssInvokeTimer = Time.time;
+			mousePosition = Input.mousePosition;
+			isScreenSaver = true;
+		}
+
+		private void endScreenSaver()
+		{
+			Console.WriteLine("Maidrone: スクリーンセーバーを終了");
+
+			if (!originalState.droneIsCreated)
 			{
 				var go = GameObject.Find("Maidrone");
-				if (go == null)
+				if (go != null) Destroy(go);
+			}
+			else
+			{
+				loadDroneState();
+			}
+
+			loadCameraState();
+
+			ssInvokeTimer = Time.time;
+			mousePosition = Input.mousePosition;
+			isScreenSaver = false;
+		}
+
+		private void saveCameraState()
+		{
+			var cam = GameObject.Find("CameraMain");
+			if (cam != null)
+			{
+				originalState.cameraPosition = cam.transform.position;
+				originalState.cameraRotation = cam.transform.rotation;
+			}
+		}
+
+		private void loadCameraState()
+		{
+			var cam = GameObject.Find("CameraMain");
+			if (cam != null)
+			{
+				cam.transform.position = originalState.cameraPosition;
+				cam.transform.rotation = originalState.cameraRotation;
+			}
+		}
+
+		private void saveDroneState()
+		{
+			var go = GameObject.Find("Maidrone");
+			if (go != null)
+			{
+				var dr = go.GetComponent<Drone>();
+				if (dr != null)
 				{
-					loadConfig();
-					go = new GameObject("Maidrone");
-					go.AddComponent<Drone>();
+					originalState.algorithm = dr.algorithm;
+					originalState.firstPersonView = dr.firstPersonView;
+					originalState.cameraPitch = dr.cameraPitch;
+					originalState.dronePosition = go.transform.position;
+					originalState.droneRotation = go.transform.rotation;
 				}
-				else
+			}
+		}
+
+		private void loadDroneState()
+		{
+			var go = GameObject.Find("Maidrone");
+			if (go != null)
+			{
+				var dr = go.GetComponent<Drone>();
+				if (dr != null)
 				{
-					Destroy(go);
+					dr.changeAlgorithm(originalState.algorithm);
+					dr.changeView(originalState.firstPersonView);
+					dr.cameraPitch = originalState.cameraPitch;
+					go.transform.position = originalState.dronePosition;
+					go.transform.rotation = originalState.droneRotation;
 				}
 			}
 		}
@@ -114,7 +282,7 @@ namespace CM3D2.Maidrone
 
 		public class Drone : MonoBehaviour
 		{
-			private enum Algorithm
+			public enum Algorithm
 			{
 				Manual,
 				Waypoint,
@@ -122,7 +290,7 @@ namespace CM3D2.Maidrone
 			}
 
 			private float m_cameraPitch = 0.0f;
-			private Vector3 m_velocity = new Vector3(0.0f, 0.0f, 0.0f);
+			private Vector3 m_velocity = Vector3.zero;
 			private bool m_firstPersonView = false;
 			private Algorithm m_alg = Algorithm.Manual;
 			private float m_waypointDepartureTime = 0.0f;
@@ -132,13 +300,19 @@ namespace CM3D2.Maidrone
 			private GameObject m_model = null;
 			private GameObject m_blade = null;
 
+			public float cameraPitch { get { return m_cameraPitch; } set { m_cameraPitch = value; } }
+			public bool firstPersonView { get { return m_firstPersonView; } }
+			public Algorithm algorithm { get { return m_alg; } }
+
 			void Start()
 			{
 				var model = new GameObject();
 				model.transform.parent = this.gameObject.transform;
+				model.transform.localPosition = Vector3.zero;
 				model.transform.localScale = new Vector3(config.ModelScale, config.ModelScale, config.ModelScale);
 				var body = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 				body.transform.parent = model.gameObject.transform;
+				body.transform.localPosition = Vector3.zero;
 				body.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 				var poll = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
 				poll.transform.parent = model.gameObject.transform;
@@ -159,7 +333,7 @@ namespace CM3D2.Maidrone
 
 				if (Input.GetKeyDown(config.PrintInfo))
 				{
-					Console.WriteLine("Pos=" + transform.position.ToString() + "; Rot=" + new Vector3(m_cameraPitch, transform.eulerAngles.y, 0.0f).ToString());
+					Console.WriteLine("Maidrone: Pos=" + transform.position.ToString() + "; Rot=" + new Vector3(m_cameraPitch, transform.eulerAngles.y, 0.0f).ToString());
 				}
 
 				if (Input.GetKeyDown(config.SwitchAlgorithm))
@@ -167,27 +341,13 @@ namespace CM3D2.Maidrone
 					switch (m_alg)
 					{
 						case Algorithm.Manual:
-							m_alg = Algorithm.Waypoint;
-							if (config.WaypointSetting.Waypoints.Count == 0)
-							{
-								m_alg = Algorithm.Lissajous;
-							}
-							else
-							{
-								var wp = config.WaypointSetting.Waypoints;
-								transform.position = wp[0].Position;
-								transform.rotation = Quaternion.Euler(0.0f, wp[0].Rotation.y, 0.0f);
-								m_cameraPitch = wp[0].Rotation.x;
-								m_prevWaypoint = 0;
-								m_nextWaypoint = 0;
-								gotoNextWaypoint();
-							}
+							changeAlgorithm(Algorithm.Waypoint);
 							break;
 						case Algorithm.Waypoint:
-							m_alg = Algorithm.Lissajous;
+							changeAlgorithm(Algorithm.Lissajous);
 							break;
 						case Algorithm.Lissajous:
-							m_alg = Algorithm.Manual;
+							changeAlgorithm(Algorithm.Manual);
 							break;
 					}
 				}
@@ -200,6 +360,14 @@ namespace CM3D2.Maidrone
 					float accY = man.AccelY * Time.deltaTime;
 
 					// control player
+					if (Input.GetKeyDown(man.ResetPosition))
+					{
+						transform.position = man.Position;
+						transform.rotation = new Quaternion();
+						m_cameraPitch = 0.0f;
+						m_velocity = new Vector3();
+					}
+
 					if (Input.GetKey(man.RotateRight)) transform.rotation = Quaternion.Euler(0.0f, man.RotSpeed * Time.deltaTime, 0.0f) * transform.rotation;
 					if (Input.GetKey(man.RotateLeft)) transform.rotation = Quaternion.Euler(0.0f, -man.RotSpeed * Time.deltaTime, 0.0f) * transform.rotation;
 					if (Input.GetKey(config.MoveUp)) m_velocity += transform.up * accY;
@@ -255,17 +423,19 @@ namespace CM3D2.Maidrone
 					m_blade.transform.rotation = Quaternion.Euler(0.0f, 1440.0f * Time.deltaTime, 0.0f) * m_blade.transform.rotation;
 				}
 
+				if (m_model != null)
+				{
+					var ml = config.ModelLissajous;
+					m_model.transform.localPosition = new Vector3(
+						ml.Position.x + Mathf.Sin(2.0f * Mathf.PI * ml.Frequency.x * Time.time + Mathf.Deg2Rad * ml.Offset.x) * ml.Amplitude.x,
+						ml.Position.y + Mathf.Sin(2.0f * Mathf.PI * ml.Frequency.y * Time.time + Mathf.Deg2Rad * ml.Offset.y) * ml.Amplitude.y,
+						ml.Position.z + Mathf.Sin(2.0f * Mathf.PI * ml.Frequency.z * Time.time + Mathf.Deg2Rad * ml.Offset.z) * ml.Amplitude.z);
+				}
+
 				// view
 				if (Input.GetKeyDown(config.SwitchCamera))
 				{
-					m_firstPersonView = !m_firstPersonView;
-					if (m_model != null)
-					{
-						for (int i = 0; i < m_model.transform.childCount; i++)
-						{
-							m_model.transform.GetChild(i).renderer.enabled = !m_firstPersonView;
-						}
-					}
+					changeView(!m_firstPersonView);
 				}
 			}
 
@@ -284,6 +454,50 @@ namespace CM3D2.Maidrone
 					{
 						cam.transform.position = transform.position;
 						cam.transform.LookAt(transform.position + Quaternion.AngleAxis(m_cameraPitch, transform.right) * transform.forward);
+					}
+				}
+			}
+
+			public void changeAlgorithm(Algorithm alg)
+			{
+				m_alg = alg;
+
+				switch (m_alg)
+				{
+					case Algorithm.Manual:
+						break;
+
+					case Algorithm.Waypoint:
+						if (config.WaypointSetting.Waypoints.Count == 0)
+						{
+							Console.WriteLine("Error: Maidrone - Waypointが見つかりませんでした。Lissajousに切り替えます。");
+							m_alg = Algorithm.Lissajous;
+						}
+						else
+						{
+							var wp = config.WaypointSetting.Waypoints;
+							transform.position = wp[0].Position;
+							transform.rotation = Quaternion.Euler(0.0f, wp[0].Rotation.y, 0.0f);
+							m_cameraPitch = wp[0].Rotation.x;
+							m_prevWaypoint = 0;
+							m_nextWaypoint = 0;
+							gotoNextWaypoint();
+						}
+						break;
+					case Algorithm.Lissajous:
+						break;
+				}
+			}
+
+			public void changeView(bool fpv)
+			{
+				m_firstPersonView = fpv;
+
+				if (m_model != null)
+				{
+					for (int i = 0; i < m_model.transform.childCount; i++)
+					{
+						m_model.transform.GetChild(i).renderer.enabled = !m_firstPersonView;
 					}
 				}
 			}
