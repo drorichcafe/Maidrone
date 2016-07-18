@@ -14,7 +14,7 @@
   <CameraPitchDown>UpArrow</CameraPitchDown>
   <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
-  <CameraFovFp>90.0</CameraFovFp>
+  <CameraFovFp>60.0</CameraFovFp>
   <CameraFovTp>45.0</CameraFovTp>
   <ModelScale>0.05</ModelScale>
   <ModelLissajous>
@@ -45,15 +45,23 @@
     </Waypoints>
   </WaypointSetting>
   <LissajousSetting>
-    <Position><x>0</x><y>1</y><z>0</z></Position>
-    <Amplitude><x>0.5</x><y>0.1</y><z>0.5</z></Amplitude>
-    <Frequency><x>0.05</x><y>0.1</y><z>0.05</z></Frequency>
-    <Offset><x>0</x><y>0</y><z>90</z></Offset>
+    <FocusMaid>true</FocusMaid>
+    <FocusTransform>Bip01 Spine1</FocusTransform>
+    <ToggleFocus>M</ToggleFocus>
+    <FindPrev>Comma</FindPrev>
+    <FindNext>Period</FindNext>
+    <DefaultPosition><x>0</x><y>0.5</y><z>0</z></DefaultPosition><!-- メイドをフォーカスしていない、または見つからないときの初期位置 -->
+    <Lissajous>
+      <Position><x>0</x><y>0</y><z>0</z></Position>
+      <Amplitude><x>0.5</x><y>0</y><z>0.5</z></Amplitude>
+      <Frequency><x>0.05</x><y>0</y><z>0.05</z></Frequency>
+      <Offset><x>0</x><y>0</y><z>90</z></Offset>
+    </Lissajous>
   </LissajousSetting>
   <ScreenSaverSetting>
     <Enable>true</Enable>
     <Time>60</Time>
-    <Algorithm>Lissajous</Algorithm><!-- Manual, Waypotins, Lissajous -->
+    <Algorithm>Lissajous</Algorithm><!-- Waypotins, Lissajous -->
     <FirstPersonView>true</FirstPersonView>
   </ScreenSaverSetting>
 </Config>

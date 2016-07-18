@@ -10,7 +10,7 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.5")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.6")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
@@ -38,12 +38,23 @@ namespace CM3D2.Maidrone
 			public List<Waypoint> Waypoints = new List<Waypoint>();
 		}
 
-		public class LissajousInfo
+		public class LissajousCurve
 		{
 			public Vector3 Position = Vector3.zero;
 			public Vector3 Amplitude = new Vector3(1.0f, 0.1f, 1.0f);
 			public Vector3 Frequency = new Vector3(1.0f, 50.0f, 1.0f);
 			public Vector3 Offset = new Vector3(0.0f, 0.0f, 180.0f);
+		}
+
+		public class LissajousInfo
+		{
+			public bool FocusMaid = true;
+			public string FocusTransform = "Bip01 Spine1";
+			public KeyCode ToggleFocus = KeyCode.M;
+			public KeyCode FindPrev = KeyCode.Comma;
+			public KeyCode FindNext = KeyCode.Period;
+			public Vector3 DefaultPosition = Vector3.zero;
+			public LissajousCurve Lissajous = new LissajousCurve();
 		}
 
 		public class ScreenSaverInfo
@@ -73,7 +84,7 @@ namespace CM3D2.Maidrone
 			public float CameraFovFp = 45.0f;
 			public float CameraFovTp = 45.0f;
 			public float ModelScale = 0.05f;
-			public LissajousInfo ModelLissajous = new LissajousInfo();
+			public LissajousCurve ModelLissajous = new LissajousCurve();
 			public ManualInfo ManualSetting = new ManualInfo();
 			public WaypointInfo WaypointSetting = new WaypointInfo();
 			public LissajousInfo LissajousSetting = new LissajousInfo();
@@ -324,6 +335,10 @@ namespace CM3D2.Maidrone
 			private Vector3 m_velocity = Vector3.zero;
 			private bool m_firstPersonView = false;
 			private Algorithm m_alg = Algorithm.Manual;
+			private int m_focusMaid = 0;
+			private bool m_autoFocus = true;
+			private Vector3 m_lsgCenter = Vector3.zero;
+			private Vector3 m_lsgOffsetH = Vector3.zero;
 			private float m_waypointDepartureTime = 0.0f;
 			private float m_waypointEstimateTime = 0.0f;
 			private int m_prevWaypoint = 0;
@@ -357,6 +372,10 @@ namespace CM3D2.Maidrone
 				m_model = model;
 				m_blade = blade;
 
+				m_lsgCenter = config.LissajousSetting.DefaultPosition;
+				m_lsgOffsetH = Vector3.zero;
+				m_autoFocus = config.LissajousSetting.FocusMaid;
+
 				changeView(m_firstPersonView);
 			}
 
@@ -366,7 +385,14 @@ namespace CM3D2.Maidrone
 
 				if (Input.GetKeyDown(config.PrintInfo))
 				{
-					Console.WriteLine("Maidrone: Pos=" + transform.position.ToString() + "; Rot=" + new Vector3(m_cameraPitch, transform.eulerAngles.y, 0.0f).ToString());
+					Console.WriteLine("Maidrone: Position " + transform.position.ToString());
+					Console.WriteLine("Maidrone: Rotation " + transform.rotation.ToString());
+					if (m_alg == Algorithm.Lissajous)
+					{
+						Console.WriteLine("Maidrone: LissajousCenter " + m_lsgCenter.ToString());
+						Console.WriteLine("Maidrone: LissajousOffset " + (m_lsgOffsetH + config.LissajousSetting.Lissajous.Position).ToString());
+						Console.WriteLine("Maidrone: LissajousAmplitude " + config.LissajousSetting.Lissajous.Amplitude.ToString());
+					}
 				}
 
 				if (Input.GetKeyDown(config.SwitchAlgorithm))
@@ -433,20 +459,62 @@ namespace CM3D2.Maidrone
 				}
 				else if (m_alg == Algorithm.Lissajous)
 				{
-					var lsg = config.LissajousSetting;
+					var lss = config.LissajousSetting;
+					var lsg = lss.Lissajous;
 
-					if (Input.GetKey(config.MoveUp)) lsg.Position += transform.up * Time.deltaTime;
-					if (Input.GetKey(config.MoveDown)) lsg.Position -= transform.up * Time.deltaTime;
-					if (Input.GetKey(config.MoveForward)) lsg.Position += transform.forward * Time.deltaTime;
-					if (Input.GetKey(config.MoveBackward)) lsg.Position -= transform.forward * Time.deltaTime;
-					if (Input.GetKey(config.MoveRight)) lsg.Position += transform.right * Time.deltaTime;
-					if (Input.GetKey(config.MoveLeft)) lsg.Position -= transform.right * Time.deltaTime;
+					if (Input.GetKey(config.MoveUp)) m_lsgOffsetH += transform.up * 0.5f * Time.deltaTime;
+					if (Input.GetKey(config.MoveDown)) m_lsgOffsetH -= transform.up * 0.5f * Time.deltaTime;
+					
+					bool oldAutoFocus = m_autoFocus;
 
+					if (Input.GetKeyDown(lss.ToggleFocus))
+					{
+						m_autoFocus = !m_autoFocus;
+					}
+
+					if (Input.GetKeyDown(lss.FindPrev))
+					{
+						var maid = getPrevMaid();
+						if (maid != null) m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
+						else m_autoFocus = false;
+					}
+					else if (Input.GetKeyDown(lss.FindNext))
+					{
+						var maid = getNextMaid();
+						if (maid != null) m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
+						else m_autoFocus = false;
+					}
+					else if (m_autoFocus)
+					{
+						var maid = getCurrentMaid();
+						if (maid != null)
+						{
+							m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
+							if (Input.GetKey(config.MoveForward)) lsg.Amplitude -= new Vector3(0.5f, 0.0f, 0.5f) * Time.deltaTime;
+							if (Input.GetKey(config.MoveBackward)) lsg.Amplitude += new Vector3(0.5f, 0.0f, 0.5f) * Time.deltaTime;
+						}
+						else m_autoFocus = false;
+					}
+					else
+					{
+						if (Input.GetKey(config.MoveForward)) m_lsgCenter += transform.forward * Time.deltaTime;
+						if (Input.GetKey(config.MoveBackward)) m_lsgCenter -= transform.forward * Time.deltaTime;
+						if (Input.GetKey(config.MoveRight)) m_lsgCenter += transform.right * Time.deltaTime;
+						if (Input.GetKey(config.MoveLeft)) m_lsgCenter -= transform.right * Time.deltaTime;
+					}
+
+					if (oldAutoFocus != m_autoFocus)
+					{
+						if (m_autoFocus) Console.WriteLine("Maidrone: Enable Maid Focus");
+						else Console.WriteLine("Maidrone: Disable Maid Focus");
+					}
+
+					Vector3 center = m_lsgCenter + m_lsgOffsetH + lsg.Position;
 					transform.position = new Vector3(
-						lsg.Position.x + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.x * Time.time + Mathf.Deg2Rad * lsg.Offset.x) * lsg.Amplitude.x,
-						lsg.Position.y + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.y * Time.time + Mathf.Deg2Rad * lsg.Offset.y) * lsg.Amplitude.y,
-						lsg.Position.z + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.z * Time.time + Mathf.Deg2Rad * lsg.Offset.z) * lsg.Amplitude.z);
-					transform.LookAt( new Vector3(lsg.Position.x, transform.position.y, lsg.Position.z) );
+						center.x + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.x * Time.time + Mathf.Deg2Rad * lsg.Offset.x) * lsg.Amplitude.x,
+						center.y + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.y * Time.time + Mathf.Deg2Rad * lsg.Offset.y) * lsg.Amplitude.y,
+						center.z + Mathf.Sin(2.0f * Mathf.PI * lsg.Frequency.z * Time.time + Mathf.Deg2Rad * lsg.Offset.z) * lsg.Amplitude.z);
+					transform.LookAt(center);
 
 					controlCamera();
 				}
@@ -523,6 +591,75 @@ namespace CM3D2.Maidrone
 					case Algorithm.Lissajous:
 						break;
 				}
+			}
+
+			private Vector3 focusMaidTransform(GameObject maidGo, string name)
+			{
+				var ts = maidGo.transform.GetComponentsInChildren<Transform>();
+				if (ts.Length == 0) return new Vector3(0.0f, 1.0f, 0.0f);
+
+				foreach (var t in ts)
+				{
+					if (t.gameObject.name == name)
+					{
+						return t.position;
+					}
+				}
+
+				Console.WriteLine("Error: Maidrone - Cannot found maid transform [" + name + "] in " + maidGo.name);
+				return Vector3.zero;
+			}
+
+			private GameObject getCurrentMaid()
+			{
+				var cm = GameMain.Instance.CharacterMgr;
+				var cnt = cm.GetMaidCount();
+				if (cnt == 0) return null;
+
+				var m = cm.GetMaid(m_focusMaid);
+				if (m == null || m.gameObject == null) return null;
+				if (m.gameObject.transform.GetComponentsInChildren<Transform>().Length == 0) return null;
+				return m.gameObject;
+			}
+
+			private GameObject getPrevMaid()
+			{
+				var cm = GameMain.Instance.CharacterMgr;
+				var cnt = cm.GetMaidCount();
+				if (cnt == 0) return null;
+
+				int old = m_focusMaid;
+				do
+				{
+					m_focusMaid--;
+					if (m_focusMaid < 0) m_focusMaid = cnt - 1;
+					if (m_focusMaid >= cnt) m_focusMaid = 0;
+				} while (cm.GetMaid(m_focusMaid) == null && m_focusMaid != old);
+
+				var m = cm.GetMaid(m_focusMaid);
+				if (m == null || m.gameObject == null) return null;
+				if (m.gameObject.transform.GetComponentsInChildren<Transform>().Length == 0) return null;
+				return m.gameObject;
+			}
+
+			private GameObject getNextMaid()
+			{
+				var cm = GameMain.Instance.CharacterMgr;
+				var cnt = cm.GetMaidCount();
+				if (cnt == 0) return null;
+
+				int old = m_focusMaid;
+				do
+				{
+					m_focusMaid++;
+					if (m_focusMaid < 0) m_focusMaid = cnt - 1;
+					if (m_focusMaid >= cnt) m_focusMaid = 0;
+				} while (cm.GetMaid(m_focusMaid) == null && m_focusMaid != old);
+
+				var m = cm.GetMaid(m_focusMaid);
+				if (m == null || m.gameObject == null) return null;
+				if (m.gameObject.transform.GetComponentsInChildren<Transform>().Length == 0) return null;
+				return m.gameObject;
 			}
 
 			public void changeView(bool fpv)
