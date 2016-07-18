@@ -10,7 +10,7 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.4")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.5")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
@@ -21,7 +21,7 @@ namespace CM3D2.Maidrone
 
 		public class ManualInfo
 		{
-			public Vector3 Position = new Vector3();
+			public Vector3 Position = Vector3.zero;
 			public KeyCode ResetPosition = KeyCode.R;
 			public KeyCode Stop = KeyCode.LeftControl;
 			public KeyCode RotateLeft = KeyCode.LeftArrow;
@@ -70,7 +70,8 @@ namespace CM3D2.Maidrone
 			public KeyCode CameraPitchDown = KeyCode.UpArrow;
 			public float CameraPitchSpeed = 15.0f;
 			public float CameraDistance = 0.25f;
-			public float CameraFieldOfView = 45.0f;
+			public float CameraFovFp = 45.0f;
+			public float CameraFovTp = 45.0f;
 			public float ModelScale = 0.05f;
 			public LissajousInfo ModelLissajous = new LissajousInfo();
 			public ManualInfo ManualSetting = new ManualInfo();
@@ -482,14 +483,14 @@ namespace CM3D2.Maidrone
 					{
 						cam.transform.position = transform.position - Quaternion.AngleAxis(m_cameraPitch, transform.right) * (transform.forward * config.CameraDistance);
 						cam.transform.LookAt(transform.position);
+						cam.GetComponent<Camera>().fieldOfView = config.CameraFovTp;
 					}
 					else
 					{
 						cam.transform.position = transform.position;
 						cam.transform.LookAt(transform.position + Quaternion.AngleAxis(m_cameraPitch, transform.right) * transform.forward);
+						cam.GetComponent<Camera>().fieldOfView = config.CameraFovFp;
 					}
-
-					cam.GetComponent<Camera>().fieldOfView = config.CameraFieldOfView;
 				}
 			}
 

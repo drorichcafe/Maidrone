@@ -14,7 +14,8 @@
   <CameraPitchDown>UpArrow</CameraPitchDown>
   <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
-  <CameraFieldOfView>45.0</CameraFieldOfView>
+  <CameraFovFp>90.0</CameraFovFp>
+  <CameraFovTp>45.0</CameraFovTp>
   <ModelScale>0.05</ModelScale>
   <ModelLissajous>
     <Position><x>0</x><y>0</y><z>0</z></Position>
@@ -51,7 +52,7 @@
   </LissajousSetting>
   <ScreenSaverSetting>
     <Enable>true</Enable>
-    <Time>15</Time>
+    <Time>60</Time>
     <Algorithm>Lissajous</Algorithm><!-- Manual, Waypotins, Lissajous -->
     <FirstPersonView>true</FirstPersonView>
   </ScreenSaverSetting>
