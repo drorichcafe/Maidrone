@@ -10,7 +10,7 @@ using UnityInjector.Attributes;
 
 namespace CM3D2.Maidrone
 {
-	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.6")]
+	[PluginFilter("CM3D2x64"), PluginFilter("CM3D2x86"), PluginName("Maidrone"), PluginVersion("0.0.0.7")]
 	public class Maidrone : PluginBase
 	{
 		public class Waypoint
@@ -22,10 +22,6 @@ namespace CM3D2.Maidrone
 		public class ManualInfo
 		{
 			public Vector3 Position = Vector3.zero;
-			public KeyCode ResetPosition = KeyCode.R;
-			public KeyCode Stop = KeyCode.LeftControl;
-			public KeyCode RotateLeft = KeyCode.LeftArrow;
-			public KeyCode RotateRight = KeyCode.RightArrow;
 			public float RotSpeed = 15.0f;
 			public float AccelXZ = 0.2f;
 			public float AccelY = 0.2f;
@@ -50,9 +46,6 @@ namespace CM3D2.Maidrone
 		{
 			public bool FocusMaid = true;
 			public string FocusTransform = "Bip01 Spine1";
-			public KeyCode ToggleFocus = KeyCode.M;
-			public KeyCode FindPrev = KeyCode.Comma;
-			public KeyCode FindNext = KeyCode.Period;
 			public Vector3 DefaultPosition = Vector3.zero;
 			public LissajousCurve Lissajous = new LissajousCurve();
 		}
@@ -67,18 +60,46 @@ namespace CM3D2.Maidrone
 
 		public class Config
 		{
-			public KeyCode Boot = KeyCode.F11;
-			public KeyCode PrintInfo = KeyCode.Space;
-			public KeyCode SwitchCamera = KeyCode.Return;
-			public KeyCode SwitchAlgorithm = KeyCode.Backspace;
-			public KeyCode MoveForward = KeyCode.W;
-			public KeyCode MoveBackward = KeyCode.S;
-			public KeyCode MoveLeft = KeyCode.A;
-			public KeyCode MoveRight = KeyCode.D;
-			public KeyCode MoveUp = KeyCode.LeftShift;
-			public KeyCode MoveDown = KeyCode.RightShift;
-			public KeyCode CameraPitchUp = KeyCode.DownArrow;
-			public KeyCode CameraPitchDown = KeyCode.UpArrow;
+			public KeyCode KbBoot = KeyCode.None;
+			public KeyCode KbPrintInfo = KeyCode.None;
+			public KeyCode KbSwitchCamera = KeyCode.None;
+			public KeyCode KbSwitchAlgorithm = KeyCode.None;
+			public KeyCode KbToggleFocus = KeyCode.None;
+			public KeyCode KbFindPrev = KeyCode.None;
+			public KeyCode KbFindNext = KeyCode.None;
+			public KeyCode KbResetPosition = KeyCode.None;
+			public KeyCode KbMoveStop = KeyCode.None;
+			public KeyCode KbMoveForward = KeyCode.None;
+			public KeyCode KbMoveBackward = KeyCode.None;
+			public KeyCode KbMoveLeft = KeyCode.None;
+			public KeyCode KbMoveRight = KeyCode.None;
+			public KeyCode KbMoveUp = KeyCode.None;
+			public KeyCode KbMoveDown = KeyCode.None;
+			public KeyCode KbRotateUp = KeyCode.None;
+			public KeyCode KbRotateDown = KeyCode.None;
+			public KeyCode KbRotateLeft = KeyCode.None;
+			public KeyCode KbRotateRight = KeyCode.None;
+
+			public KeyCode JsBoot = KeyCode.None;
+			public KeyCode JsPrintInfo = KeyCode.None;
+			public KeyCode JsSwitchCamera = KeyCode.None;
+			public KeyCode JsSwitchAlgorithm = KeyCode.None;
+			public KeyCode JsToggleFocus = KeyCode.None;
+			public KeyCode JsFindPrev = KeyCode.None;
+			public KeyCode JsFindNext = KeyCode.None;
+			public KeyCode JsResetPosition = KeyCode.None;
+			public KeyCode JsMoveStop = KeyCode.None;
+			public string JsMoveX = string.Empty;
+			public string JsMoveY = string.Empty;
+			public string JsMoveZ = string.Empty;
+			public string JsRotateX = string.Empty;
+			public string JsRotateY = string.Empty;			
+			public bool JsFlipMoveX = false;
+			public bool JsFlipMoveY = false;
+			public bool JsFlipMoveZ = false;
+			public bool JsFlipRotateX = false;
+			public bool JsFlipRotateY = false;
+			
 			public float CameraPitchSpeed = 15.0f;
 			public float CameraDistance = 0.25f;
 			public float CameraFovFp = 45.0f;
@@ -89,6 +110,21 @@ namespace CM3D2.Maidrone
 			public WaypointInfo WaypointSetting = new WaypointInfo();
 			public LissajousInfo LissajousSetting = new LissajousInfo();
 			public ScreenSaverInfo ScreenSaverSetting = new ScreenSaverInfo();
+		}
+
+		public struct InputValue
+		{
+			public bool boot;
+			public bool printInfo;
+			public bool switchCamera;
+			public bool switchAlgorithm;
+			public bool toggleFocus;
+			public bool findPrev;
+			public bool findNext;
+			public bool resetPosition;
+			public bool moveStop;
+			public Vector3 move;
+			public Vector3 rotate;
 		}
 
 		class GameState
@@ -111,6 +147,52 @@ namespace CM3D2.Maidrone
 		static Vector3 mousePosition = new Vector3();
 		static float ssInvokeTimer = 0.0f;
 		static int level = 0;
+
+		public static InputValue getInputValue()
+		{
+			InputValue ret;
+			ret.boot = Input.GetKeyDown(config.KbBoot) || Input.GetKeyDown(config.JsBoot);
+			ret.printInfo = Input.GetKeyDown(config.KbPrintInfo) || Input.GetKeyDown(config.JsPrintInfo);
+			ret.switchCamera = Input.GetKeyDown(config.KbSwitchCamera) || Input.GetKeyDown(config.JsSwitchCamera);
+			ret.switchAlgorithm = Input.GetKeyDown(config.KbSwitchAlgorithm) || Input.GetKeyDown(config.JsSwitchAlgorithm);
+			ret.toggleFocus = Input.GetKeyDown(config.KbToggleFocus) || Input.GetKeyDown(config.JsToggleFocus);
+			ret.findPrev = Input.GetKeyDown(config.KbFindPrev) || Input.GetKeyDown(config.JsFindPrev);
+			ret.findNext = Input.GetKeyDown(config.KbFindNext) || Input.GetKeyDown(config.JsFindNext);
+			ret.resetPosition = Input.GetKeyDown(config.KbResetPosition) || Input.GetKeyDown(config.JsResetPosition);
+			ret.moveStop = Input.GetKeyDown(config.KbMoveStop) || Input.GetKeyDown(config.JsMoveStop);
+			ret.move = Vector3.zero;
+			ret.rotate = Vector3.zero;
+
+			if (config.JsMoveX != string.Empty) ret.move.x = Input.GetAxis(config.JsMoveX);
+			if (config.JsMoveY != string.Empty) ret.move.y = Input.GetAxis(config.JsMoveY);
+			if (config.JsMoveZ != string.Empty) ret.move.z = Input.GetAxis(config.JsMoveZ);
+			if (config.JsRotateX != string.Empty) ret.rotate.x = Input.GetAxis(config.JsRotateX);
+			if (config.JsRotateY != string.Empty) ret.rotate.y = Input.GetAxis(config.JsRotateY);
+			if (config.JsFlipMoveX) ret.move.x *= -1;
+			if (config.JsFlipMoveY) ret.move.y *= -1;
+			if (config.JsFlipMoveZ) ret.move.z *= -1;
+			if (config.JsFlipRotateX) ret.rotate.x *= -1;
+			if (config.JsFlipRotateY) ret.rotate.y *= -1;
+
+			if (ret.move.x * ret.move.x < 0.2f * 0.2f) ret.move.x = 0.0f;
+			if (ret.move.y * ret.move.y < 0.2f * 0.2f) ret.move.y = 0.0f;
+			if (ret.move.z * ret.move.z < 0.2f * 0.2f) ret.move.z = 0.0f;
+			if (ret.rotate.x * ret.rotate.x < 0.2f * 0.2f) ret.rotate.x = 0.0f;
+			if (ret.rotate.y * ret.rotate.y < 0.2f * 0.2f) ret.rotate.y = 0.0f;
+
+			if (Input.GetKey(config.KbMoveUp)) ret.move.y = 1.0f;
+			if (Input.GetKey(config.KbMoveDown)) ret.move.y = -1.0f;
+			if (Input.GetKey(config.KbMoveForward)) ret.move.z = 1.0f;
+			if (Input.GetKey(config.KbMoveBackward)) ret.move.z = -1.0f;
+			if (Input.GetKey(config.KbMoveRight)) ret.move.x = 1.0f;
+			if (Input.GetKey(config.KbMoveLeft)) ret.move.x = -1.0f;
+			if (Input.GetKey(config.KbRotateRight)) ret.rotate.y = 1.0f;
+			if (Input.GetKey(config.KbRotateLeft)) ret.rotate.y = -1.0f;
+			if (Input.GetKey(config.KbRotateUp)) ret.rotate.x = 1.0f;
+			if (Input.GetKey(config.KbRotateDown)) ret.rotate.x = -1.0f;
+
+			return ret;
+		}
 
 		public void Awake()
 		{
@@ -139,6 +221,8 @@ namespace CM3D2.Maidrone
 
 		public void LateUpdate()
 		{
+			var iv = getInputValue();
+
 			if (isScreenSaver)
 			{
 				if (isAppFocused && (Input.anyKey || Input.mousePosition != mousePosition))
@@ -147,7 +231,7 @@ namespace CM3D2.Maidrone
 				}
 			}
 			else {
-				if (isAppFocused && Input.GetKeyDown(config.Boot))
+				if (isAppFocused && iv.boot)
 				{
 					var go = GameObject.Find("Maidrone");
 					if (go == null)
@@ -381,9 +465,10 @@ namespace CM3D2.Maidrone
 
 			void Update()
 			{
+				var iv = getInputValue();
 				var config = Maidrone.config;
 
-				if (Input.GetKeyDown(config.PrintInfo))
+				if (iv.printInfo)
 				{
 					Console.WriteLine("Maidrone: Position " + transform.position.ToString());
 					Console.WriteLine("Maidrone: Rotation " + transform.rotation.ToString());
@@ -395,7 +480,7 @@ namespace CM3D2.Maidrone
 					}
 				}
 
-				if (Input.GetKeyDown(config.SwitchAlgorithm))
+				if (iv.switchAlgorithm)
 				{
 					switch (m_alg)
 					{
@@ -419,7 +504,7 @@ namespace CM3D2.Maidrone
 					float accY = man.AccelY * Time.deltaTime;
 
 					// control player
-					if (Input.GetKeyDown(man.ResetPosition))
+					if (iv.resetPosition)
 					{
 						transform.position = man.Position;
 						transform.rotation = new Quaternion();
@@ -427,15 +512,16 @@ namespace CM3D2.Maidrone
 						m_velocity = new Vector3();
 					}
 
-					if (Input.GetKey(man.RotateRight)) transform.rotation = Quaternion.Euler(0.0f, man.RotSpeed * Time.deltaTime, 0.0f) * transform.rotation;
-					if (Input.GetKey(man.RotateLeft)) transform.rotation = Quaternion.Euler(0.0f, -man.RotSpeed * Time.deltaTime, 0.0f) * transform.rotation;
-					if (Input.GetKey(config.MoveUp)) m_velocity += transform.up * accY;
-					if (Input.GetKey(config.MoveDown)) m_velocity -= transform.up * accY;
-					if (Input.GetKey(config.MoveForward)) m_velocity += transform.forward * accXZ;
-					if (Input.GetKey(config.MoveBackward)) m_velocity -= transform.forward * accXZ;
-					if (Input.GetKey(config.MoveRight)) m_velocity += transform.right * accXZ;
-					if (Input.GetKey(config.MoveLeft)) m_velocity -= transform.right * accXZ;
-					if (Input.GetKey(man.Stop)) m_velocity = Vector3.zero;
+					transform.rotation = Quaternion.Euler(0.0f, man.RotSpeed * Time.deltaTime * iv.rotate.y, 0.0f) * transform.rotation;
+					m_velocity += transform.right * (accXZ * iv.move.x);
+					m_velocity += transform.up * (accY * iv.move.y);
+					m_velocity += transform.forward * (accXZ * iv.move.z);
+
+					if (iv.moveStop)
+					{
+						m_velocity = Vector3.zero;
+					}
+
 					transform.position += m_velocity * Time.deltaTime;
 					m_velocity -= m_velocity * Mathf.Clamp(Time.deltaTime * man.Brake, 0.0f, 1.0f);
 
@@ -461,24 +547,23 @@ namespace CM3D2.Maidrone
 				{
 					var lss = config.LissajousSetting;
 					var lsg = lss.Lissajous;
-
-					if (Input.GetKey(config.MoveUp)) m_lsgOffsetH += transform.up * 0.5f * Time.deltaTime;
-					if (Input.GetKey(config.MoveDown)) m_lsgOffsetH -= transform.up * 0.5f * Time.deltaTime;
+					
+					m_lsgOffsetH += iv.move.y * transform.up * 0.5f * Time.deltaTime;
 					
 					bool oldAutoFocus = m_autoFocus;
 
-					if (Input.GetKeyDown(lss.ToggleFocus))
+					if (iv.toggleFocus)
 					{
 						m_autoFocus = !m_autoFocus;
 					}
 
-					if (Input.GetKeyDown(lss.FindPrev))
+					if (iv.findPrev)
 					{
 						var maid = getPrevMaid();
 						if (maid != null) m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
 						else m_autoFocus = false;
 					}
-					else if (Input.GetKeyDown(lss.FindNext))
+					else if (iv.findNext)
 					{
 						var maid = getNextMaid();
 						if (maid != null) m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
@@ -490,17 +575,14 @@ namespace CM3D2.Maidrone
 						if (maid != null)
 						{
 							m_lsgCenter = focusMaidTransform(maid, lss.FocusTransform);
-							if (Input.GetKey(config.MoveForward)) lsg.Amplitude -= new Vector3(0.5f, 0.0f, 0.5f) * Time.deltaTime;
-							if (Input.GetKey(config.MoveBackward)) lsg.Amplitude += new Vector3(0.5f, 0.0f, 0.5f) * Time.deltaTime;
+							lsg.Amplitude -= new Vector3(0.5f, 0.0f, 0.5f) * iv.move.z * Time.deltaTime;
 						}
 						else m_autoFocus = false;
 					}
 					else
 					{
-						if (Input.GetKey(config.MoveForward)) m_lsgCenter += transform.forward * Time.deltaTime;
-						if (Input.GetKey(config.MoveBackward)) m_lsgCenter -= transform.forward * Time.deltaTime;
-						if (Input.GetKey(config.MoveRight)) m_lsgCenter += transform.right * Time.deltaTime;
-						if (Input.GetKey(config.MoveLeft)) m_lsgCenter -= transform.right * Time.deltaTime;
+						m_lsgCenter += iv.move.z * transform.forward * Time.deltaTime;
+						m_lsgCenter += iv.move.x * transform.right * Time.deltaTime;
 					}
 
 					if (oldAutoFocus != m_autoFocus)
@@ -534,8 +616,7 @@ namespace CM3D2.Maidrone
 						ml.Position.z + Mathf.Sin(2.0f * Mathf.PI * ml.Frequency.z * Time.time + Mathf.Deg2Rad * ml.Offset.z) * ml.Amplitude.z);
 				}
 
-				// view
-				if (Input.GetKeyDown(config.SwitchCamera))
+				if (iv.switchCamera)
 				{
 					changeView(!m_firstPersonView);
 				}
@@ -694,11 +775,12 @@ namespace CM3D2.Maidrone
 
 			private void controlCamera()
 			{
-				// control camera
-				if (Input.GetKey(config.CameraPitchUp)) m_cameraPitch += config.CameraPitchSpeed * Time.deltaTime;
-				if (Input.GetKey(config.CameraPitchDown)) m_cameraPitch -= config.CameraPitchSpeed * Time.deltaTime;
+				var iv = getInputValue();
+				m_cameraPitch += iv.rotate.x * config.CameraPitchSpeed * Time.deltaTime;
 				m_cameraPitch = Mathf.Clamp(m_cameraPitch, -75.0f, 75.0f);
 			}
+
+			
 		}
 	}
 }

@@ -1,17 +1,58 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <Boot>F11</Boot>
-  <PrintInfo>Space</PrintInfo>
-  <SwitchCamera>Tab</SwitchCamera>
-  <SwitchAlgorithm>Backspace</SwitchAlgorithm>
-  <MoveForward>W</MoveForward>
-  <MoveBackward>S</MoveBackward>
-  <MoveLeft>A</MoveLeft>
-  <MoveRight>D</MoveRight>
-  <MoveUp>LeftShift</MoveUp>
-  <MoveDown>RightShift</MoveDown>
-  <CameraPitchUp>DownArrow</CameraPitchUp>
-  <CameraPitchDown>UpArrow</CameraPitchDown>
+<!-- キーボード操作設定 -->
+  <KbBoot>F11</KbBoot>
+  <KbPrintInfo>Space</KbPrintInfo>
+  <KbSwitchCamera>Tab</KbSwitchCamera>
+  <KbSwitchAlgorithm>Backspace</KbSwitchAlgorithm>
+  <KbToggleFocus>M</KbToggleFocus>
+  <KbFindPrev>Comma</KbFindPrev>
+  <KbFindNext>Period</KbFindNext>
+  <KbResetPosition>R</KbResetPosition>
+  <KbMoveStop>LeftControl</KbMoveStop>
+  <KbMoveForward>W</KbMoveForward>
+  <KbMoveBackward>S</KbMoveBackward>
+  <KbMoveLeft>A</KbMoveLeft>
+  <KbMoveRight>D</KbMoveRight>
+  <KbMoveUp>LeftShift</KbMoveUp>
+  <KbMoveDown>RightShift</KbMoveDown>
+  <KbRotateUp>DownArrow</KbRotateUp>
+  <KbRotateDown>UpArrow</KbRotateDown>
+  <KbRotateLeft>LeftArrow</KbRotateLeft>
+  <KbRotateRight>RightArrow</KbRotateRight>
+<!-- ジョイスティック操作設定 (Xbox360コントローラを想定) -->
+<!-- JoystickButton0 ... A
+     JoystickButton1 ... B
+     JoystickButton2 ... X
+     JoystickButton3 ... Y
+     JoystickButton4 ... LB
+     JoystickButton5 ... RB
+     JoystickButton6 ... BACK
+     JoystickButton7 ... START
+     JoystickButton8 ... LS
+     JoystickButton9 ... RS
+     Oculus_GearVR_LThumbstickX ... LeftStick AxisX
+     Oculus_GearVR_LThumbstickY ... LeftStick AxisY
+     Oculus_GearVR_RThumbstickX ... LT & RT
+     Oculus_GearVR_RThumbstickY ... RightStick AxisX
+     Oculus_GearVR_DpadX ... RightStick AxisY
+-->
+  <JsSwitchCamera>JoystickButton0</JsSwitchCamera>
+  <JsPrintInfo>JoystickButton1</JsPrintInfo>
+  <JsMoveStop>JoystickButton2</JsMoveStop>
+  <JsFindPrev>JoystickButton4</JsFindPrev>
+  <JsFindNext>JoystickButton5</JsFindNext>
+  <JsSwitchAlgorithm>JoystickButton6</JsSwitchAlgorithm>
+  <JsBoot>JoystickButton7</JsBoot>
+  <JsResetPosition>JoystickButton8</JsResetPosition>
+  <JsToggleFocus>JoystickButton9</JsToggleFocus>
+  <JsMoveX>Oculus_GearVR_LThumbstickX</JsMoveX>
+  <JsMoveZ>Oculus_GearVR_LThumbstickY</JsMoveZ>
+  <JsMoveY>Oculus_GearVR_RThumbstickX</JsMoveY>
+  <JsRotateY>Oculus_GearVR_RThumbstickY</JsRotateY>
+  <JsRotateX>Oculus_GearVR_DpadX</JsRotateX>
+  <JsFlipRotateX>false</JsFlipRotateX>
+  <JsFlipRotateY>true</JsFlipRotateY>
   <CameraPitchSpeed>15.0</CameraPitchSpeed>
   <CameraDistance>0.25</CameraDistance>
   <CameraFovFp>60.0</CameraFovFp>
@@ -25,14 +66,10 @@
   </ModelLissajous>
   <ManualSetting>
     <Position><x>0</x><y>1.0</y><z>0</z></Position>
-    <ResetPosition>R</ResetPosition>
-    <Stop>LeftControl</Stop>
-    <RotateLeft>LeftArrow</RotateLeft>
-    <RotateRight>RightArrow</RotateRight>
     <RotSpeed>15</RotSpeed>
-    <AccelXZ>0.2</AccelXZ>
-    <AccelY>0.2</AccelY>
-    <Brake>0.1</Brake>
+    <AccelXZ>0.25</AccelXZ>
+    <AccelY>0.25</AccelY>
+    <Brake>0.125</Brake>
   </ManualSetting>
   <WaypointSetting>
     <MoveSpeed>1.0</MoveSpeed>
@@ -47,9 +84,6 @@
   <LissajousSetting>
     <FocusMaid>true</FocusMaid>
     <FocusTransform>Bip01 Spine1</FocusTransform>
-    <ToggleFocus>M</ToggleFocus>
-    <FindPrev>Comma</FindPrev>
-    <FindNext>Period</FindNext>
     <DefaultPosition><x>0</x><y>0.5</y><z>0</z></DefaultPosition><!-- メイドをフォーカスしていない、または見つからないときの初期位置 -->
     <Lissajous>
       <Position><x>0</x><y>0</y><z>0</z></Position>
@@ -59,7 +93,7 @@
     </Lissajous>
   </LissajousSetting>
   <ScreenSaverSetting>
-    <Enable>true</Enable>
+    <Enable>false</Enable>
     <Time>60</Time>
     <Algorithm>Lissajous</Algorithm><!-- Waypotins, Lissajous -->
     <FirstPersonView>true</FirstPersonView>
