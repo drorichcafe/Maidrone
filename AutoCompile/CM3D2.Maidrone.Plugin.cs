@@ -453,6 +453,9 @@ namespace CM3D2.Maidrone
 				blade.transform.localPosition = new Vector3(0f, 0.3f, 0.0f);
 				blade.transform.localScale = new Vector3(0.5f, 0.01f, 0.1f);
 
+				rb.mass = 10.0f;
+				rb.isKinematic = true;
+
 				m_model = model;
 				m_blade = blade;
 
